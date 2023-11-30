@@ -98,6 +98,20 @@ prep_for_yarn_workspaces() {
   done
 }
 
+# search the package.json manifest for inter-workspace dependencies and delete those dependencies
+prep_for_monorepos() {
+  if grep -q '"workspace:\*"' "$1"; then
+
+    local project_path
+    project_path=$(dirname "$1")
+    cd "${project_path}" || exit
+
+    # remove all dependencies with the version "workspace:*" as these are inter-workspace dependencies
+    # but ensure we don't modify the package file if the jq command fails
+    jq 'del(.dependencies[] | select(. == "workspace:*"))' package.json > package.json.tmp && mv package.json.tmp package.json
+  fi
+}
+
 node::main() {
   declare -x SNYK_LOG_FILE
 
@@ -123,6 +137,14 @@ node::main() {
   for yarnfile in "${yarnfiles[@]}"; do
     prep_for_yarn_workspaces "${yarnfile}"
       cd "${targetdir}"
+  done
+
+  cd "${targetdir}"
+
+  # check if any packagefiles import inter-workspace dependencies and remove them
+  for packagefile in "${packages[@]}"; do
+    prep_for_monorepos "${packagefile}"
+    cd "${targetdir}"
   done
 
   cd "${targetdir}"
