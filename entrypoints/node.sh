@@ -100,15 +100,15 @@ prep_for_yarn_workspaces() {
 
 # search the package.json manifest for inter-workspace dependencies and delete those dependencies
 prep_for_monorepos() {
-  if grep -q '"workspace:\*"' "$1"; then
+  if grep -q -e '"workspace:\*"' -e '"workspace:\^"' "$1"; then
 
     local project_path
     project_path=$(dirname "$1")
     cd "${project_path}" || exit
 
-    # remove all dependencies with the version "workspace:*" as these are inter-workspace dependencies
+    # remove all dependencies with the version "workspace:*" or "workspace:^" as these are inter-workspace dependencies
     # but ensure we don't modify the package file if the jq command fails
-    jq 'del(.dependencies[] | select(. == "workspace:*"))' package.json > package.json.tmp && mv package.json.tmp package.json
+    jq 'del(.dependencies[] | select(. == "workspace:*" or . == "workspace:^"))' package.json > package.json.tmp && mv package.json.tmp package.json
   fi
 }
 
