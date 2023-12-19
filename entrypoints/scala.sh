@@ -59,7 +59,7 @@ scala::main() {
   local sbtfiles
 
   set -o noglob
-  readarray -t sbtfiles < <(sort_manifests "$(find "${SNYK_TARGET}" -type f -name "build.sbt" $SNYK_IGNORES)")
+  readarray -t sbtfiles < <(sort_manifests "$(find "${SNYK_TARGET}" -type f -name "build.sbt" ${SNYK_IGNORES})")
   set +o noglob
 
   for sbtfile in "${sbtfiles[@]}"; do
@@ -75,8 +75,6 @@ scala::main() {
   if [[ "${SNYK_TEST_COUNT}" == 1 ]]; then
     stdout_test_count
   fi
-
 }
 
 scala::main "$@"
-

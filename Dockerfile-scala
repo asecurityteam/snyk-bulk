@@ -18,8 +18,11 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /root/.sbt/1.0/plugins && \
-    echo 'addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1")' > /root/.sbt/1.0/plugins/plugins.sbt
+RUN mkdir -p /root/.sbt/1.0/plugins
+RUN echo 'addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.10.0-RC1")' > /root/.sbt/1.0/plugins/plugins.sbt
+
+# See: https://github.com/snyk/snyk-sbt-plugin/pull/127/files
+RUN echo 'asciiGraphWidth := 999999999' > /root/.sbt/1.0/plugins/global.sbt
 
 COPY snyk-bulk/scripts/install_snyk.sh /root/install_snyk.sh
 RUN chmod +x /root/install_snyk.sh
