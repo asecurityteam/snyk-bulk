@@ -63,7 +63,7 @@ snyk_packagefile() {
   elif [ ! -e "package-lock.json" ] && [ ! -e "yarn.lock" ] && [ ! -d "node_modules" ]; then
 
     timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-    ( echo "${timestamp}| npm install for ${prefix}/${manifest}: $(npm install --loglevel=error --no-audit)" >> "${SNYK_LOG_FILE}" ) 2>&1 | tee -a "${SNYK_LOG_FILE}"
+    ( echo "${timestamp}| npm install for ${prefix}/${manifest}: $(npm install --loglevel=error --no-audit --omit=dev)" >> "${SNYK_LOG_FILE}" ) 2>&1 | tee -a "${SNYK_LOG_FILE}"
 
     run_snyk "${manifest}" "npm" "${prefix}/${manifest}"    
 
@@ -113,6 +113,21 @@ prep_for_monorepos() {
   fi
 }
 
+# search the package.json manifest for patched dependencies and delete the patches
+ignore_patched_deps() {
+  if grep -q '"patch:' "$1"; then
+
+    local project_path
+    project_path=$(dirname "$1")
+    cd "${project_path}" || exit
+
+    # remove all resolutions for patched packages, with `patch:` version
+    # but ensure we don't modify the package file if the jq command fails
+    # snyk cannot scan patches
+    jq 'del(.resolutions[] | select(startswith("patch:")))' package.json > package.json.tmp && mv package.json.tmp package.json
+  fi
+}
+
 node::main() {
   declare -x SNYK_LOG_FILE
 
@@ -143,8 +158,10 @@ node::main() {
   cd "${targetdir}"
 
   # check if any packagefiles import inter-workspace dependencies and remove them
+  # check if any packagefiles use patched dependencies and remove them
   for packagefile in "${packages[@]}"; do
     prep_for_monorepos "${packagefile}"
+    ignore_patched_deps "${packagefile}"
     cd "${targetdir}"
   done
 
