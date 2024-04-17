@@ -30,7 +30,7 @@ snyk_pomfile(){
   else
     # something there
     
-    (mvn install -DskipTests -Denforcer.fail=false -Ddocker.skip=true -Dscope=runtime --fail-never) &>> "${SNYK_LOG_FILE}"
+    (mvn install -DskipTests -DskipIntegrationsTests=true -DskipDocker=true -Ddocker.skip=true -Dmaven.test.skip=true -Denforcer.fail=false -Dscope=runtime --fail-never) &>> "${SNYK_LOG_FILE}"
 
   fi
 
