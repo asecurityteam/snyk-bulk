@@ -77,6 +77,8 @@ prep_for_yarn_workspaces() {
   manifest=$(basename "$1")
   local project_path
   project_path=$(dirname "$1")
+  local root_packagefile
+  root_packagefile="${project_path}/package.json"
 
   cd "${project_path}" || exit
 
@@ -94,7 +96,13 @@ prep_for_yarn_workspaces() {
   fi
 
   for packagedir in "${yarn_workspaces_result[@]}"; do
+    # copy the yarn.lock file to the workspace directory
     ln $manifest $packagedir/$manifest
+    # copy the root resolutions to the workspace packagefile
+    if jq -e '.resolutions' "$root_packagefile" > /dev/null; then
+      resolutions=$(jq '.resolutions' "$root_packagefile")
+      jq --argjson resolutions "$resolutions" '.resolutions = $resolutions' "$packagedir/package.json" > tmp.json && mv tmp.json "$packagedir/package.json"
+    fi
   done
 }
 
