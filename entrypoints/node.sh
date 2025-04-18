@@ -117,7 +117,7 @@ prep_for_monorepos() {
     # remove all dependencies that use the `workspace:` protocol
     # but ensure we don't modify the package file if the jq command fails
     # refernce: https://yarnpkg.com/features/workspaces#cross-references
-    jq 'del(.dependencies[] | select(startswith("workspace:")))' package.json > package.json.tmp && mv package.json.tmp package.json
+     jq 'del(.dependencies[] | select(startswith("workspace:") or startswith("^workspace:")))' package.json > package.json.tmp && mv package.json.tmp package.json
   fi
 }
 
